@@ -3,18 +3,26 @@ package com.demo;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 
 import static java.time.ZoneOffset.UTC;
 
-public class SimpleTest {
+public class DateTest {
 
 
     @Test
-    public void name() throws Exception {
-        Date expiration = Date.from(LocalDateTime.now().toInstant(UTC));
-        System.out.println(expiration);
+    public void convertLocalDateTimeToDate() throws Exception {
+        Date expiration = Date.from(LocalDateTime.now(UTC).toInstant(UTC));
+        System.out.println("Date : " + expiration);
+        System.out.println("LocalDateTime : " + LocalDateTime.now());
 
-        System.out.println(LocalDateTime.now());
     }
+    @Test
+    public void convertLocalDateTimeToDateAndPlusHour() throws Exception {
+        Date expiration = Date.from(LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.UTC));
+        System.out.println("Date : " + expiration);
+        System.out.println("LocalDateTime : " + LocalDateTime.now());
+    }
+
 }
