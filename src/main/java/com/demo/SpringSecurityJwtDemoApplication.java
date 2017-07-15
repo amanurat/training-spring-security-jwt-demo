@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.Key;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Date;
 
 import static java.time.ZoneOffset.UTC;
@@ -60,6 +61,30 @@ class TestController {
 
 	@Autowired private SecretProvider secretProvider;
 
+	@RequestMapping(value = "/refresh/1", method = GET)
+	public void refreshToken() throws IOException, URISyntaxException {
+		//refresh token server must return error then client will call server for refresh token
+		//client sent access token again
+
+		byte[] secretKey = secretProvider.getKey();
+		Date expiration = Date.from(LocalDateTime.now(UTC).plusHours(2).toInstant(UTC));
+
+
+		final JwtBuilder builder = Jwts.builder();
+
+		final String compactJws = builder
+				.setSubject("john")
+				.setExpiration(expiration)
+				.setIssuer("john")
+				.setAudience("audience1")
+				.claim("roles", Arrays.asList("USER", "ADMIN"))
+				.signWith(SignatureAlgorithm.HS512, secretKey)
+
+				.compact();
+		System.out.println("refresh token compactJws : "+ compactJws);
+	}
+
+
 	@RequestMapping(value = "/public/1", method = GET)
 	public void test() throws IOException, URISyntaxException {
 		System.out.println("-- public --");
@@ -71,6 +96,7 @@ class TestController {
 		byte[] secretKey = secretProvider.getKey();
 		Date expiration = Date.from(LocalDateTime.now(UTC).plusHours(2).toInstant(UTC));
 
+
 		final String compactJws = Jwts.builder()
 				.setSubject("john")
 				.setExpiration(expiration)
@@ -80,12 +106,6 @@ class TestController {
 		System.out.println("compactJws : "+ compactJws);
 
 	}
-
-	@RequestMapping(value = "/login", method = GET)
-	public void login() {
-
-	}
-
 
 	@RequestMapping(value = "/private/1", method = GET)
 	public void test2() {
@@ -115,7 +135,7 @@ class Config extends WebSecurityConfigurerAdapter {
 	public void configure(WebSecurity web) throws Exception {
 		web.ignoring()
 				// Spring Security should completely ignore URLs starting with /resources/
-				.antMatchers("/resources/**", "/public/**");
+				.antMatchers("/resources/**", "/public/**", "/refresh/**");
 	}
 
 	@Override
