@@ -1,5 +1,8 @@
 package com.demo;
 
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.impl.crypto.MacProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +31,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.Key;
+import java.time.LocalDateTime;
+import java.util.Date;
 
+import static java.time.ZoneOffset.UTC;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @SpringBootApplication
@@ -42,10 +52,40 @@ public class SpringSecurityJwtDemoApplication {
 @RestController
 class TestController {
 
-	@RequestMapping(value = "/public/1", method = GET)
-	public void test() {
-		System.out.println("-- public --");
+	void generateKey() throws IOException {
+		Key key = MacProvider.generateKey();
+		System.out.println("key : "+ key);
+		Files.write(Paths.get("xxx.key"), key.getEncoded());
 	}
+
+	@Autowired private SecretProvider secretProvider;
+
+	@RequestMapping(value = "/public/1", method = GET)
+	public void test() throws IOException, URISyntaxException {
+		System.out.println("-- public --");
+		//		byte[] secretKey = secretKeyProvider.getKey();
+		// We need a signing key, so we'll create one just for this example. Usually
+// the key would be read from your application configuration instead.
+		byte[] key = secretProvider.getKey();
+
+		byte[] secretKey = secretProvider.getKey();
+		Date expiration = Date.from(LocalDateTime.now(UTC).plusHours(2).toInstant(UTC));
+
+		final String compactJws = Jwts.builder()
+				.setSubject("john")
+				.setExpiration(expiration)
+//				.setIssuer(ISSUER)
+				.signWith(SignatureAlgorithm.HS512, secretKey)
+				.compact();
+		System.out.println("compactJws : "+ compactJws);
+
+	}
+
+	@RequestMapping(value = "/login", method = GET)
+	public void login() {
+
+	}
+
 
 	@RequestMapping(value = "/private/1", method = GET)
 	public void test2() {
@@ -75,7 +115,7 @@ class Config extends WebSecurityConfigurerAdapter {
 	public void configure(WebSecurity web) throws Exception {
 		web.ignoring()
 				// Spring Security should completely ignore URLs starting with /resources/
-				.antMatchers("/resources/**");
+				.antMatchers("/resources/**", "/public/**");
 	}
 
 	@Override
@@ -93,6 +133,7 @@ class Config extends WebSecurityConfigurerAdapter {
 		http.addFilterBefore(new TokenAuthenticationFilter(authenticationManager()), BasicAuthenticationFilter.class)
 				.authorizeRequests()
 				.antMatchers("/public/**").permitAll()
+				.antMatchers("/login").permitAll()
 //				.antMatchers(publicPaths()).permitAll()
 				.and()
 				.httpBasic();
@@ -155,6 +196,9 @@ class UserTokenAuthenticationProvider implements AuthenticationProvider {
 
 //	private LogInService logInService;
 
+	@Autowired
+	private SecretProvider secretProvider;
+
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
@@ -163,12 +207,45 @@ class UserTokenAuthenticationProvider implements AuthenticationProvider {
 		}
 
 		final String token = (String)authentication.getCredentials();
+		System.out.println("token is : "+ token);
+
+		try {
+			final Jws<Claims> claimsJws = claimsJwt(token);
+
+			System.out.println(claimsJws);
+			final String subject = claimsJws.getBody().getSubject();
+
+			System.out.println("subject : "+ subject);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+
+
 //		final UserDetail userDetail = logInService.findLoginByToken(token);
 
 		final UserDetail userDetail = new UserDetail("john", "deo", token);
 
-
 		return new UsernamePasswordAuthenticationToken(userDetail, token, null);
+	}
+
+	private Jws<Claims> claimsJwt(String token) throws IOException, URISyntaxException {
+
+		try {
+
+
+			return Jwts.parser().setSigningKey(secretProvider.getKey()).parseClaimsJws(token);
+
+			//OK, we can trust this JWT
+
+		} catch (SignatureException e) {
+
+			//don't trust the JWT!
+			throw new BadCredentialsException("cannot parse jwt ");
+		}
+
 	}
 
 	@Override
@@ -176,6 +253,16 @@ class UserTokenAuthenticationProvider implements AuthenticationProvider {
 		return authentication == UsernamePasswordAuthenticationToken.class;
 	}
 }
+
+@Component
+class SecretProvider {
+
+	public byte[] getKey() throws URISyntaxException, IOException {
+		return Files.readAllBytes(Paths.get(this.getClass().getResource("/secret.key").toURI()));
+	}
+
+}
+
 
 class UserDetail {
 
