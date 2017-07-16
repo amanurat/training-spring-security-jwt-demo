@@ -1,10 +1,18 @@
 package com.demo.bean;
 
-public class UserDetail {
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+public class UserDetail implements UserDetails {
 
 	private String username;
 	private String password;
 	private String token;
+	private Collection<? extends GrantedAuthority> authorities = new ArrayList<>();
+
 
 	public UserDetail(String username, String password, String token) {
 		this.username = username;
@@ -24,11 +32,40 @@ public class UserDetail {
 		return username;
 	}
 
+	@Override
+	public boolean isAccountNonExpired() {
+		return false;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		return false;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return false;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return false;
+	}
+
 	public void setUsername(String username) {
 		this.username = username;
 	}
 
-	public String getPassword() {
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return authorities;
+	}
+
+    public void setAuthorities(Collection<? extends GrantedAuthority> authorities) {
+        this.authorities = authorities;
+    }
+
+    public String getPassword() {
 		return password;
 	}
 
