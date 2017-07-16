@@ -9,5 +9,9 @@ JWT
     Generate JWT Token
     Verify JWT Token
     Handle UnauthorizedException http status 401
+    //TODO authorize on method => hasRole
+    //TODO logging configuration
+    //TODO logging mdcFilter
+    
                                 
     
