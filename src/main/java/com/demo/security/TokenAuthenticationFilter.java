@@ -1,6 +1,5 @@
 package com.demo.security;
 
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,14 +23,16 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
 
+/*
 		if(request.getMethod().equals(HttpMethod.OPTIONS.name())) {
 			filterChain.doFilter(request, response);
 			return;
 		}
-
+*/
 		String xAuth = request.getHeader("X-Authorization");
 
 		System.out.println("xAuth : "+ xAuth);
+
 		try {
 
 			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(null, xAuth);
