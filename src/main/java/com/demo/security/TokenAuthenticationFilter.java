@@ -29,13 +29,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 			return;
 		}
 */
-		String xAuth = request.getHeader("X-Authorization");
+		String xAuth = request.getHeader("Authorization");
 
 		System.out.println("xAuth : "+ xAuth);
 
+		String token = xAuth.replaceAll("Bearer", "");
+
 		try {
 
-			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(null, xAuth);
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(null, token);
 
 			SecurityContextHolder.getContext().setAuthentication(authManager.authenticate(auth));
 
