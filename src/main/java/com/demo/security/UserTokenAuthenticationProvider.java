@@ -4,8 +4,6 @@ import com.demo.bean.UserDetail;
 import com.demo.service.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,16 +13,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 @Component
-class UserTokenAuthenticationProvider implements AuthenticationProvider {
-
-//	private LogInService logInService;
-
-	@Autowired
-	private SecretProvider secretProvider;
+public class UserTokenAuthenticationProvider implements AuthenticationProvider {
 
 	@Autowired
 	private JwtService jwtService;
@@ -39,12 +29,15 @@ class UserTokenAuthenticationProvider implements AuthenticationProvider {
 		final String token = (String)authentication.getCredentials();
 		System.out.println("token is : "+ token);
 
-        final Jws<Claims> claimsJws = jwtService.verify(token);
+        try {
+            final Jws<Claims> claimsJws = jwtService.verify(token);
+            System.out.println(claimsJws);
+            final String subject = claimsJws.getBody().getSubject();
 
-        System.out.println(claimsJws);
-        final String subject = claimsJws.getBody().getSubject();
-
-        System.out.println("subject : "+ subject);
+            System.out.println("subject : "+ subject);
+        } catch (Exception e) {
+            throw new BadCredentialsException("Failed to verify token", e);
+        }
 
 //		final UserDetail userDetail = logInService.findLoginByToken(token);
 
@@ -54,25 +47,9 @@ class UserTokenAuthenticationProvider implements AuthenticationProvider {
 		return new UsernamePasswordAuthenticationToken(userDetail, token, userDetail.getAuthorities());
 	}
 
-	private Jws<Claims> claimsJwt(String token) throws IOException, URISyntaxException {
-
-		try {
-
-
-			return Jwts.parser().setSigningKey(secretProvider.getKey()).parseClaimsJws(token);
-
-			//OK, we can trust this JWT
-
-		} catch (SignatureException e) {
-
-			//don't trust the JWT!
-			throw new BadCredentialsException("cannot parse jwt ");
-		}
-
-	}
 
 	@Override
 	public boolean supports(Class<?> authentication) {
-		return authentication == UsernamePasswordAuthenticationToken.class;
-	}
+        return UsernamePasswordAuthenticationToken.class.equals(authentication);
+    }
 }
