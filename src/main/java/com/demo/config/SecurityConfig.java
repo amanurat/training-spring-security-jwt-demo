@@ -19,7 +19,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public void configure(WebSecurity web) throws Exception {
 		web.ignoring()
 				// Spring Security should completely ignore URLs starting with /resources/
-				.antMatchers("/resources/**", "/public/**", "/refresh/**", "/login")
+				.antMatchers("/resources/**", "/public/**", "/refresh/**", "/login", "/h2-console/**")
 		.antMatchers(HttpMethod.OPTIONS, "/**")
 		;
 	}
@@ -33,6 +33,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 				.antMatchers("/public/**").permitAll()
 				.antMatchers("/login").permitAll()
+				.antMatchers("/h2-console/**").permitAll()
 //				.anyRequest().authenticated()
 				.and()
 				.httpBasic();
