@@ -33,6 +33,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
 		System.out.println("xAuth : "+ xAuth);
 
+		if (xAuth == null || xAuth.indexOf("Bearer") < 0 ) {
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Bearer is required");
+			return;
+		}
+
 		String token = xAuth.replaceAll("Bearer", "");
 
 		try {
