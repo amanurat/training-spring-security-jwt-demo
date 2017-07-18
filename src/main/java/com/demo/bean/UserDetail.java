@@ -5,6 +5,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class UserDetail implements UserDetails {
 
@@ -14,10 +15,11 @@ public class UserDetail implements UserDetails {
 	private Collection<? extends GrantedAuthority> authorities = new ArrayList<>();
 
 
-	public UserDetail(String username, String password, String token) {
+	public UserDetail(String username, String password, String token, List<GrantedAuthority> authorities) {
 		this.username = username;
 		this.password = password;
 		this.token = token;
+		this.authorities = authorities;
 	}
 
 	public String getToken() {
